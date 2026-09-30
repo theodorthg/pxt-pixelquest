@@ -509,15 +509,22 @@ namespace pixelquest {
     })
 
     // ---------------------------------------------------------------- Kacheln: Stacheln & Ziel
-    for (let b = 0; b < 3; b++) {
-        scene.onOverlapTile(SpriteKind.Player, gfx.tilesets[b][4], function (p, loc) {
-            if (p.bottom > loc.y - 2) hurtHero()
-        })
-        scene.onOverlapTile(SpriteKind.Player, gfx.tilesets[b][5], function (p, loc) {
-            if (levelDone) return
-            levelDone = true
-            pendingLevel = level + 1
-        })
+    // Eigene Prüfung statt scene.onOverlapTile: der MakeCode-Compiler erlaubt dort
+    // nur feste Kachelbilder, die Engine wählt die Kacheln aber je nach Welt.
+    function checkHeroTiles() {
+        const ts = tileset()
+        const c0 = Math.floor((hero.left + 2) / 16), c1 = Math.floor((hero.right - 2) / 16)
+        const r0 = Math.floor((hero.top + 2) / 16), r1 = Math.floor((hero.bottom - 1) / 16)
+        for (let c = c0; c <= c1; c++) {
+            for (let r = r0; r <= r1; r++) {
+                const loc = tiles.getTileLocation(c, r)
+                if (tiles.tileAtLocationEquals(loc, ts[4]) && hero.bottom > loc.y - 2) hurtHero()
+                if (tiles.tileAtLocationEquals(loc, ts[5]) && !levelDone) {
+                    levelDone = true
+                    pendingLevel = level + 1
+                }
+            }
+        }
     }
 
     // ---------------------------------------------------------------- Level laden
@@ -612,6 +619,7 @@ namespace pixelquest {
         }
         // Blinken während Unverwundbarkeit
         hero.setFlag(SpriteFlag.Invisible, now < invincibleUntil && Math.floor(now / 80) % 2 == 0)
+        checkHeroTiles()
         updateHeroAnimation()
         updateEnemies()
         updateBoss()
