@@ -1,5 +1,7 @@
 # Pixel-Quest
 
+> In MakeCode Arcade nutzen: **Erweiterungen** → `https://github.com/theodorthg/pxt-pixelquest` einfügen.
+
 Jump & Run-Engine für MakeCode Arcade: 3 Welten (Gras, SciFi, Dungeon), animierte Figuren und Gegner,
 Doppelsprung, Truhen, Endboss mit Statusleiste und wählbarer Waffe. Alle Grafiken und Sounds sind mit dem
 Arcade Asset Generator prozedural erzeugt.
@@ -31,6 +33,11 @@ Pfeiltasten laufen, A springt (in der Luft nochmal = Doppelsprung), B greift an 
 
 - `tools/build-assets.js` erzeugt `assets.ts` und `sounds.ts` (Seeds und Sounds im CONFIG-Block)
 - `tools/build-levels.js` erzeugt `levels.ts` aus `levels/level*.txt` (Legende im Skript)
-- Beide benötigen den Generator unter `../generator/`.
+- Beide benötigen den [Arcade Asset Generator](https://github.com/theodorthg/arcade-asset-generator),
+  ausgecheckt als Nachbarordner `../generator/`.
+
+## Lizenz
+
+MIT
 
 > Diese Seite wird auch von MakeCode angezeigt, wenn die Erweiterung geladen ist.
