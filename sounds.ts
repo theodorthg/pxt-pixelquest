@@ -1,0 +1,20 @@
+// AUTOMATISCH ERZEUGT von tools/build-assets.js – Sounds im CONFIG-Block dort ändern.
+namespace sounds {
+    export const jump = music.createSoundEffect(WaveShape.Triangle, 278, 620, 106, 0, 116, SoundExpressionEffect.None, InterpolationCurve.Curve)
+    export const doubleJump = music.createSoundEffect(WaveShape.Square, 492, 1395, 94, 0, 128, SoundExpressionEffect.None, InterpolationCurve.Linear)
+    export const coin = music.createSoundEffect(WaveShape.Sine, 1286, 1790, 133, 0, 71, SoundExpressionEffect.None, InterpolationCurve.Logarithmic)
+    export const gem = music.createSoundEffect(WaveShape.Sine, 1392, 1969, 168, 0, 120, SoundExpressionEffect.None, InterpolationCurve.Linear)
+    export const chest = music.createSoundEffect(WaveShape.Triangle, 268, 1432, 148, 54, 417, SoundExpressionEffect.Warble, InterpolationCurve.Curve)
+    export const heart = music.createSoundEffect(WaveShape.Sine, 270, 1430, 112, 29, 488, SoundExpressionEffect.None, InterpolationCurve.Curve)
+    export const sword = music.createSoundEffect(WaveShape.Square, 995, 173, 185, 0, 119, SoundExpressionEffect.None, InterpolationCurve.Linear)
+    export const shoot = music.createSoundEffect(WaveShape.Sawtooth, 1988, 398, 113, 0, 168, SoundExpressionEffect.None, InterpolationCurve.Linear)
+    export const bossHit = music.createSoundEffect(WaveShape.Square, 875, 127, 154, 0, 113, SoundExpressionEffect.None, InterpolationCurve.Linear)
+    export const enemyShot = music.createSoundEffect(WaveShape.Square, 1435, 417, 83, 0, 158, SoundExpressionEffect.Vibrato, InterpolationCurve.Logarithmic)
+    export const startTune = music.melodyPlayable(new music.Melody("c#4:2-142 f4:2 g#4:2 c#5:2 r:1 g#4:2 c#5:8"))
+    export const levelTune = music.melodyPlayable(new music.Melody("g4:1-181 c5:1 e5:1 g5:5"))
+    export const winTune = music.melodyPlayable(new music.Melody("c4:2-168 c4:1 c4:1 g4:4 e4:2 g4:2 b4:6 r:1 e5:1 c5:8"))
+    export const endTune = music.melodyPlayable(new music.Melody("g5:3-117 f#5:3 e5:3 d#5:3 b3:10"))
+    export const heroDeath = music.melodyPlayable(new music.Melody("g#5:1-213 e5:1 b4:1 g#4:1 d#4:4"))
+    export const enemyDeath = music.melodyPlayable(new music.Melody("f#5:1-197 d5:1 a4:1 f#4:1 c#4:4"))
+    export const bossTune = music.melodyPlayable(new music.Melody("c#3:2-116 c#3:2 d#3:2 c#3:4 c#3:2 c#3:2 d#3:2 c#3:4 a3:2 g#3:2 d3:6"))
+}
