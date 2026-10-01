@@ -1,26 +1,10 @@
-// Erzeugt projects/jump-and-run/assets.ts mit dem Arcade Asset Generator.
-// Seeds und Figur hier anpassen, dann: node tools/build-assets.js
+// Erzeugt assets.ts (eingebaute Grafiken = Fallback) und sounds.ts mit dem Arcade Asset Generator.
+// Seeds, Figur und Sounds stehen in tools/config.js. Aufruf: node tools/build-assets.js
 const fs = require('fs'), path = require('path');
 const G = require('../../generator/assetgen.js');
 const S = require('../../generator/soundgen.js');
 
-const CONFIG = {
-    seeds: { grass: '1', scifi: '7', dungeon: '3' },
-    enemySeed: '5',
-    bossType: 'knight', bossSeed: '2',
-    itemSeed: '1',
-    // Sounds: Name im Spiel -> [Vorlage aus dem Generator, Seed]
-    sfx: {
-        jump: ['jump', '1'], doubleJump: ['doubleJump', '1'], coin: ['coin', '1'], gem: ['coin', '7'],
-        chest: ['powerup', '1'], heart: ['powerup', '4'], sword: ['hit', '3'], shoot: ['laser', '1'],
-        bossHit: ['hit', '8'], enemyShot: ['laser', '5'],
-    },
-    melodies: {
-        startTune: ['start', '1'], levelTune: ['level', '1'], winTune: ['win', '1'], endTune: ['gameover', '1'],
-        heroDeath: ['death', '1'], enemyDeath: ['death', '6'], bossTune: ['boss', '1'],
-    },
-    hero: { skin: 0xd, hair: 0xe, shirt: 2, pants: 8, boots: 0xe, hat: 'cap', hatColor: 2, hairStyle: 'short', cape: 0 },
-};
+const CONFIG = require('./config.js');
 const BIOMES = ['grass', 'scifi', 'dungeon'];
 const cap = s => s[0].toUpperCase() + s.slice(1);
 const flip = frames => frames.map(f => f.flipX());
@@ -58,6 +42,10 @@ const it = G.items(CONFIG.itemSeed);
 ts += G.framesToTS('coin', it.coin);
 ['gem', 'heart', 'shot', 'fire', 'chestClosed', 'chestOpen'].forEach(k => ts += G.imageToTS(k, it[k]));
 ts += G.imageToTS('slashR', it.slash) + G.imageToTS('slashL', it.slash.flipX());
+// Markierungs-Kacheln für Level (Start, Münze, Gegner, ...), Reihenfolge = G.PQ_MARKERS
+const mk = G.markers({ style: 'grass', char: CONFIG.hero, itemSeed: CONFIG.itemSeed, enemySeed: CONFIG.enemySeed, bossType: CONFIG.bossType, bossSeed: CONFIG.bossSeed });
+mk.forEach((p, i) => ts += G.imageToTS(G.PQ_MARKERS[i], p));
+ts += `    export const markers: Image[] = [${G.PQ_MARKERS.join(', ')}]\n`;
 
 ts += `    export const backgrounds: Image[][] = [${refs.bg.join(', ')}]\n`;
 ts += `    export const tilesets: Image[][] = [\n        ${refs.tiles.join(',\n        ')}\n    ]\n`;

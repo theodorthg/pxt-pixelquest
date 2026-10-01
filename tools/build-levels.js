@@ -12,12 +12,12 @@ const fs = require('fs'), path = require('path');
 
 const TILE = { '.': 0, '#': 2, '=': 3, '^': 4, 'G': 5, 'd': 6 };
 const WALL = new Set(['#', '=']);
-const SPAWN = { P: 0, c: 1, g: 2, h: 3, C: 4, H: 5, e: 6, f: 7, B: 8, X: 9 };
+const MARKER_CHARS = 'PcghCHefBX';   // -> Kachel 7..16 = gfx.markers[0..9] (Reihenfolge wie im Generator)
 const BIOMES = ['grass', 'scifi', 'dungeon'];
 
 const dir = path.join(__dirname, '../levels');
 const files = fs.readdirSync(dir).filter(f => /^level\d+\.txt$/.test(f)).sort();
-const out = { maps: [], spawns: [], biomes: [], names: [] };
+const out = { maps: [], biomes: [], names: [] };
 
 files.forEach((file, li) => {
     const lines = fs.readFileSync(path.join(dir, file), 'utf8').split('\n');
@@ -28,7 +28,8 @@ files.forEach((file, li) => {
     });
     const w = Math.max(...rows.map(r => r.length)), h = rows.length;
     const grid = rows.map(r => r.padEnd(w, '.'));
-    const bytes = [w & 255, w >> 8, h & 255, h >> 8], walls = [], spawns = [];
+    const bytes = [w & 255, w >> 8, h & 255, h >> 8], walls = [];
+    let objects = 0;
     let hasPlayer = false;
     for (let y = 0; y < h; y++) {
         const wr = [];
@@ -36,7 +37,7 @@ files.forEach((file, li) => {
             const ch = grid[y][x];
             let t = 0;
             if (ch in TILE) t = TILE[ch];
-            else if (ch in SPAWN) { spawns.push(SPAWN[ch], x, y); if (ch === 'P') hasPlayer = true; }
+            else if (MARKER_CHARS.indexOf(ch) >= 0) { t = 7 + MARKER_CHARS.indexOf(ch); objects++; if (ch === 'P') hasPlayer = true; }
             else throw new Error(`${file}: unbekanntes Zeichen '${ch}' in Zeile ${y + 1}, Spalte ${x + 1}`);
             if (ch === '#' && (y === 0 || grid[y - 1][x] !== '#')) t = 1; // Oberkante
             bytes.push(t);
@@ -47,11 +48,10 @@ files.forEach((file, li) => {
     if (!hasPlayer) throw new Error(`${file}: kein Spielerstart (P)`);
     const biome = BIOMES.indexOf(meta.biome || 'grass');
     if (biome < 0) throw new Error(`${file}: unbekanntes Biom ${meta.biome}`);
-    out.maps.push(`            case ${li}: return tiles.createTilemap(hex\`${Buffer.from(bytes).toString('hex')}\`, img\`\n${walls.join('\n')}\n            \`, gfx.tilesets[${biome}], TileScale.Sixteen)`);
-    out.spawns.push(`[${spawns.join(', ')}]`);
+    out.maps.push(`            case ${li}: return tiles.createTilemap(hex\`${Buffer.from(bytes).toString('hex')}\`, img\`\n${walls.join('\n')}\n            \`, gfx.tilesets[${biome}].concat(gfx.markers), TileScale.Sixteen)`);
     out.biomes.push(biome);
     out.names.push(JSON.stringify(meta.name || 'Level ' + (li + 1)));
-    console.log(`${file}: ${w}x${h}, Biom ${BIOMES[biome]}, ${spawns.length / 3} Objekte`);
+    console.log(`${file}: ${w}x${h}, Biom ${BIOMES[biome]}, ${objects} Objekte`);
 });
 
 const ts = `// AUTOMATISCH ERZEUGT von tools/build-levels.js – Level in levels/*.txt bearbeiten.
@@ -59,10 +59,7 @@ namespace levels {
     export const count = ${files.length}
     export const names: string[] = [${out.names.join(', ')}]
     export const biomes: number[] = [${out.biomes.join(', ')}]
-    // je Objekt: Typ, Spalte, Zeile (Typen siehe tools/build-levels.js)
-    export const spawns: number[][] = [
-        ${out.spawns.join(',\n        ')}
-    ]
+    // Spielobjekte stecken als Markierungs-Kacheln (gfx.markers) in den Tilemaps.
     export function tilemap(i: number): tiles.TileMapData {
         switch (i) {
 ${out.maps.join('\n')}

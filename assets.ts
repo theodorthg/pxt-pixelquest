@@ -3172,6 +3172,187 @@ namespace gfx {
         . 1 1 9 9 6 6 . . . . . . . . .
         . . 1 1 9 9 6 6 . . . . . . . .
     `
+    export const pqStart = img`
+        7 7 . . 7 7 3 2 7 7 2 f 7 7 . 7
+        7 . . . f 2 2 2 2 2 2 f f . . 7
+        . . . . f e e e e e 2 2 2 f . .
+        . . . . f e e d d f d f f . . .
+        7 . . . f e e d d f d d f . . 7
+        7 . . . f d d d d d d f . . . 7
+        . . . . f d d d d d d f . . . .
+        . . . . . f 2 2 2 2 f . . . . .
+        7 . . . . f 2 2 e 2 f . . . . 7
+        7 . . . . f 2 2 e 2 f . . . . 7
+        . . . . . f 8 8 d 8 f . . . . .
+        . . . . . f c c 8 8 f . . . . .
+        7 . . . . f c c 8 8 f . . . . 7
+        7 . . . . f c c e e f . . . . 7
+        . . . . . . f f f f . . . . . .
+        7 7 . . 7 7 . . 7 7 . . 7 7 . .
+    `
+    export const pqCoin = img`
+        5 5 . . 5 5 . . 5 5 . . 5 5 . 5
+        5 . . . . . . . . . . . . . . 5
+        . . . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . . . .
+        5 . . . . . f f f f . . . . . 5
+        5 . . . . f 5 5 5 5 f . . . . 5
+        . . . . f 5 1 5 4 5 5 f . . . .
+        . . . . f 5 5 5 4 5 5 f . . . .
+        5 . . . f 5 5 5 4 5 5 f . . . 5
+        5 . . . f 5 5 5 4 5 5 f . . . 5
+        . . . . . f 5 5 5 5 f . . . . .
+        . . . . . . f f f f . . . . . .
+        5 . . . . . . . . . . . . . . 5
+        5 . . . . . . . . . . . . . . 5
+        . . . . . . . . . . . . . . . .
+        5 5 . . 5 5 . . 5 5 . . 5 5 . .
+    `
+    export const pqGem = img`
+        5 5 . . 5 5 . . 5 5 . . 5 5 . 5
+        5 . . . . . . . . . . . . . . 5
+        . . . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . . . .
+        5 . . . . . . . . . . . . . . 5
+        5 . . . . . f f f f . . . . . 5
+        . . . . . f 9 1 9 9 9 . . . . .
+        . . . . f 9 1 9 9 9 9 f . . . .
+        5 . . . . f 6 6 6 6 9 . . . . 5
+        5 . . . . . f 6 6 9 . . . . . 5
+        . . . . . . . 6 9 . . . . . . .
+        . . . . . . . . . . . . . . . .
+        5 . . . . . . . . . . . . . . 5
+        5 . . . . . . . . . . . . . . 5
+        . . . . . . . . . . . . . . . .
+        5 5 . . 5 5 . . 5 5 . . 5 5 . .
+    `
+    export const pqHeart = img`
+        5 5 . . 5 5 . . 5 5 . . 5 5 . 5
+        5 . . . . . . . . . . . . . . 5
+        . . . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . . . .
+        5 . . . . . . . . . . . . . . 5
+        5 . . . . f f . f f . . . . . 5
+        . . . . f 2 2 f 2 2 f . . . . .
+        . . . . f 2 1 2 2 2 2 f . . . .
+        5 . . . f 2 2 2 2 2 f . . . . 5
+        5 . . . . f 2 2 2 f . . . . . 5
+        . . . . . . f 2 f . . . . . . .
+        . . . . . . . f . . . . . . . .
+        5 . . . . . . . . . . . . . . 5
+        5 . . . . . . . . . . . . . . 5
+        . . . . . . . . . . . . . . . .
+        5 5 . . 5 5 . . 5 5 . . 5 5 . .
+    `
+    export const pqChest = img`
+        4 4 . . 4 4 . . 4 4 . . 4 4 . 4
+        4 . . . . . . . . . . . . . . 4
+        . f f f f f f f f f f f f f f .
+        f 4 4 5 5 4 4 4 4 4 4 5 5 4 4 f
+        4 4 4 5 5 4 4 4 4 4 4 5 5 4 4 4
+        4 4 4 5 5 4 4 4 4 4 4 5 5 4 4 4
+        f 4 4 5 5 4 4 5 5 4 4 5 5 4 4 f
+        f c c 5 5 c c f 5 c c 5 5 c c f
+        4 c c 5 5 c c 5 5 c c 5 5 c c 4
+        4 c c 5 5 c c c c c c 5 5 c c 4
+        f c c 5 5 c c c c c c 5 5 c c f
+        f c c 5 5 c c c c c c 5 5 c c f
+        4 c c 5 5 c c c c c c 5 5 c c 4
+        4 c c 5 5 c c c c c c 5 5 c c 4
+        f c c 5 5 c c c c c c 5 5 c c f
+        4 4 f f 4 4 f f 4 4 f f 4 4 f .
+    `
+    export const pqChestHeart = img`
+        4 4 . . 4 4 . . 4 4 . . 4 4 . 4
+        4 . . . . . . . . f f . f f . 4
+        . f f f f f f f f 2 2 f 2 2 f .
+        f 4 4 5 5 4 4 4 f 2 1 2 2 2 2 f
+        4 4 4 5 5 4 4 4 f 2 2 2 2 2 f 4
+        4 4 4 5 5 4 4 4 4 f 2 2 2 f 4 4
+        f 4 4 5 5 4 4 5 5 4 f 2 f 4 4 f
+        f c c 5 5 c c f 5 c c f 5 c c f
+        4 c c 5 5 c c 5 5 c c 5 5 c c 4
+        4 c c 5 5 c c c c c c 5 5 c c 4
+        f c c 5 5 c c c c c c 5 5 c c f
+        f c c 5 5 c c c c c c 5 5 c c f
+        4 c c 5 5 c c c c c c 5 5 c c 4
+        4 c c 5 5 c c c c c c 5 5 c c 4
+        f c c 5 5 c c c c c c 5 5 c c f
+        4 4 f f 4 4 f f 4 4 f f 4 4 f .
+    `
+    export const pqWalker = img`
+        2 2 . . 2 2 . . 2 2 . . 2 2 . 2
+        2 . . . . . . . . . . . . . . 2
+        . . . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . . . .
+        2 . . . . . . f f f . . . . . 2
+        2 . . . . f f 2 2 2 f f . . . 2
+        . . . . f 2 2 2 2 2 2 2 f . . .
+        . . . f 2 2 3 3 2 2 2 2 2 f . .
+        2 . . f 2 2 2 2 2 2 2 2 2 f . 2
+        2 . f 2 2 2 2 2 2 1 f 2 1 f f 2
+        . . f 2 2 2 2 2 2 1 f 2 1 f f .
+        . . f e 2 2 2 2 2 2 2 2 2 e f .
+        2 . . f 2 2 2 2 2 2 2 2 2 f . 2
+        2 . . f e 2 2 2 2 2 2 2 e f . 2
+        . . . . f e e e e e e e f . . .
+        2 2 . . 2 2 f f 2 2 f f 2 2 . .
+    `
+    export const pqFlyer = img`
+        2 2 f . 2 2 . . 2 2 . . 2 2 f 2
+        2 e e f . . . . . . . . f e e 2
+        f e e f f f . . . . f f f e e f
+        . f e e e e f f f f e e e e f .
+        2 f e e e e f 2 2 2 e e e e f 2
+        2 . f f f 2 2 2 2 2 1 f f f . 2
+        . . f e 2 2 2 2 2 2 1 f 2 f f .
+        . . . f 2 2 2 2 2 2 2 2 5 5 4 f
+        2 . f e 2 2 2 2 2 2 2 2 2 f f 2
+        2 . . f f 2 2 2 2 2 2 2 f . . 2
+        . . . . . f f 2 2 2 f f . . . .
+        . . . . . . . f f f . . . . . .
+        2 . . . . . . . . . . . . . . 2
+        2 . . . . . . . . . . . . . . 2
+        . . . . . . . . . . . . . . . .
+        2 2 . . 2 2 . . 2 2 . . 2 2 . .
+    `
+    export const pqBoss = img`
+        a a . . a a . . a a . . a a . a
+        a . . . f f f f f f f . . . . a
+        . . . . f c c c c c c f . . . .
+        . . . . f c c c c c c f . . . .
+        a . . . f c 5 5 c 5 5 f . . . a
+        a . . 6 f c c f f f c f f . . a
+        f f f f 6 6 6 6 6 6 6 6 6 f f .
+        f 8 8 8 8 8 8 8 5 8 8 8 8 8 8 f
+        a 8 8 8 8 8 5 5 5 5 5 8 8 8 8 a
+        a 8 8 8 8 8 8 8 5 8 8 8 8 8 8 a
+        f 8 8 8 8 8 8 8 5 8 8 8 8 8 8 f
+        f c c c c c c c c c c c c c c f
+        a c c c f c c f f c c c f c c a
+        a . . . f c c f f c c c . . . a
+        . . . c f c c f f c c c f . . .
+        a a . f a a c c a a c c a a . .
+    `
+    export const pqGate = img`
+        b b . . b b . . b b . . b b . b
+        b . . . . . . . . . . . . . . b
+        . . c c c c c c c c c c c c . .
+        . . . b c . b c . b c . b c . .
+        b . . b c . b c . b c . b c . b
+        b . . b c . b c . b c . b c . b
+        . . . b c . b c . b c . b c . .
+        . . . b c . b c . b c . b c . .
+        b . . b c . b c . b c . b c . b
+        b . . b c . b c . b c . b c . b
+        . . . b c . b c . b c . b c . .
+        . . . b c . b c . b c . b c . .
+        b . . b c . b c . b c . b c . b
+        b . c c c c c c c c c c c c . b
+        . . . . . . . . . . . . . . . .
+        b b . . b b . . b b . . b b . .
+    `
+    export const markers: Image[] = [pqStart, pqCoin, pqGem, pqHeart, pqChest, pqChestHeart, pqWalker, pqFlyer, pqBoss, pqGate]
     export const backgrounds: Image[][] = [[bgGrassSky, bgGrassFar, bgGrassNear], [bgScifiSky, bgScifiFar, bgScifiNear], [bgDungeonSky, bgDungeonFar, bgDungeonNear]]
     export const tilesets: Image[][] = [
         [tileGrassEmpty, tileGrassGroundTop, tileGrassGround, tileGrassPlatform, tileGrassSpikes, tileGrassGoal, tileGrassDeco],

@@ -2,6 +2,12 @@
 //  PIXEL-QUEST – Jump & Run-Engine als MakeCode-Erweiterung
 //  Grafiken: assets.ts, Sounds: sounds.ts, Level: levels.ts (alle generiert,
 //  siehe tools/). Blöcke: Kategorie "Pixel-Quest".
+//
+//  Ab v0.2 nimmt die Engine Grafiken und Level bevorzugt aus dem PROJEKT:
+//  Assets mit festen Namen (heroRun, grassSky, grassSpikes, ...) ersetzen die
+//  eingebauten Grafiken, Welten kommen aus Tilemaps (Block "Welt ... Karte ...").
+//  Spielobjekte werden in Tilemaps mit Markierungs-Kacheln (pqStart, pqCoin, ...)
+//  gesetzt. Fehlt etwas im Projekt, greift der eingebaute Fallback.
 // =====================================================================
 
 namespace SpriteKind {
@@ -42,8 +48,24 @@ namespace sfx {
 }
 
 //% color="#1b7f86" weight=100 icon="\uf11b" block="Pixel-Quest"
-//% groups='["Start", "Einstellungen", "Ereignisse", "Werte"]'
+//% groups='["Start", "Welten", "Einstellungen", "Ereignisse", "Werte"]'
 namespace pixelquest {
+    /** Grafik-Stil einer Welt: bestimmt Hintergrund, Kacheln und Gegner */
+    export enum Style {
+        //% block="Gras"
+        Grass = 0,
+        //% block="SciFi"
+        SciFi = 1,
+        //% block="Dungeon"
+        Dungeon = 2
+    }
+    const STYLE_NAMES = ["grass", "scifi", "dungeon"]
+    const STYLE_TITLES = ["Gruene Wiesen", "Neon-Station", "Verlies"]
+    const WALKER_TYPES = ["slime", "robot", "skeleton"]
+    const FLYER_TYPES = ["bird", "drone", "bat"]
+    const MARKER_NAMES = ["pqStart", "pqCoin", "pqGem", "pqHeart", "pqChest", "pqChestHeart", "pqWalker", "pqFlyer", "pqBoss", "pqGate"]
+    const MAX_WORLDS = 9
+
     // ---------------------------------------------------------------- Einstellungen (per Block änderbar)
     let startWorld = 0
     let gravity = 400
@@ -65,9 +87,9 @@ namespace pixelquest {
     let bossHandler: () => void = null
     let worldHandler: (world: number) => void = null
 
-    // Spawn-Typen (siehe tools/build-levels.js)
-    const S_PLAYER = 0, S_COIN = 1, S_GEM = 2, S_HEART = 3, S_CHEST = 4, S_CHEST_HEART = 5
-    const S_WALKER = 6, S_FLYER = 7, S_BOSS = 8, S_GATE = 9
+    // Markierungs-Kacheln (Reihenfolge wie MARKER_NAMES / gfx.markers)
+    const M_START = 0, M_COIN = 1, M_GEM = 2, M_HEART = 3, M_CHEST = 4, M_CHEST_HEART = 5
+    const M_WALKER = 6, M_FLYER = 7, M_BOSS = 8, M_GATE = 9
 
     // Waffen
     const W_NONE = 0, W_SWORD = 1, W_SHOTS = 2
@@ -99,6 +121,114 @@ namespace pixelquest {
     let bossFlashUntil = 0
     let bossAttackUntil = 0
     let gateCol = -1
+    let started = false
+    let running = false
+    let worldCount = 3
+    let bossWorld = false
+    const worldMaps: tiles.TileMapData[] = [null, null, null, null, null, null, null, null, null]
+    const worldStyles: number[] = [-1, -1, -1, -1, -1, -1, -1, -1, -1]
+    let spikeIdx: number[] = []
+    let goalIdx: number[] = []
+
+    // ---------------------------------------------------------------- Assets: Projekt zuerst, sonst eingebaut
+    let heroIdleR: Image[] = null, heroIdleL: Image[] = null, heroRunR: Image[] = null, heroRunL: Image[] = null
+    let heroJumpR: Image[] = null, heroJumpL: Image[] = null, heroFallR: Image[] = null, heroFallL: Image[] = null
+    let bossWalkR: Image[] = null, bossWalkL: Image[] = null
+    let bossAttackR: Image = null, bossAttackL: Image = null, bossHurtImg: Image = null
+    let coinFrames: Image[] = null
+    let gemImg: Image = null, heartImg: Image = null, shotImg: Image = null, fireImg: Image = null
+    let slashR: Image = null, slashL: Image = null, chestClosedImg: Image = null, chestOpenImg: Image = null
+    const styleBg: Image[][] = []
+    const styleTiles: Image[][] = []
+    const walkerR: Image[][] = [], walkerL: Image[][] = [], flyerR: Image[][] = [], flyerL: Image[][] = []
+    const walkerDead: Image[] = [], flyerDead: Image[] = []
+    const markerImgs: Image[] = []
+
+    function projImg(name: string, fallback: Image): Image {
+        const a = helpers.getImageByName(name)
+        return a ? a : fallback
+    }
+    function projAnim(name: string, fallback: Image[]): Image[] {
+        const a: Image[] = helpers.getAnimationByName(name)
+        return a && a.length > 0 ? a : fallback
+    }
+    function projTile(name: string, fallback: Image): Image {
+        const a = helpers.getTileByName(name)
+        return a ? a : fallback
+    }
+    function flipped(frames: Image[]): Image[] {
+        return frames.map(function (f: Image) {
+            const c = f.clone()
+            c.flipX()
+            return c
+        })
+    }
+
+    function resolveAssets() {
+        const idle = gfx.heroIdleR
+        heroIdleR = projAnim("heroIdle", [idle[0], idle[0], idle[0], idle[0], idle[1]])
+        heroIdleL = flipped(heroIdleR)
+        heroRunR = projAnim("heroRun", gfx.heroRunR)
+        heroRunL = flipped(heroRunR)
+        heroJumpR = [projImg("heroJump", gfx.heroJumpR[0])]
+        heroJumpL = flipped(heroJumpR)
+        heroFallR = [projImg("heroFall", gfx.heroFallR[0])]
+        heroFallL = flipped(heroFallR)
+        bossWalkR = projAnim("bossWalk", gfx.bossWalkR)
+        bossWalkL = flipped(bossWalkR)
+        bossAttackR = projImg("bossAttack", gfx.bossAttackR)
+        bossAttackL = flipped([bossAttackR])[0]
+        bossHurtImg = projImg("bossHurt", gfx.bossHurt)
+        coinFrames = projAnim("coinSpin", gfx.coin)
+        gemImg = projImg("gem", gfx.gem)
+        heartImg = projImg("heart", gfx.heart)
+        shotImg = projImg("shot", gfx.shot)
+        fireImg = projImg("fire", gfx.fire)
+        slashR = projImg("slash", gfx.slashR)
+        slashL = flipped([slashR])[0]
+        chestClosedImg = projImg("chestClosed", gfx.chestClosed)
+        chestOpenImg = projImg("chestOpen", gfx.chestOpen)
+        for (let s = 0; s < 3; s++) {
+            const S = STYLE_NAMES[s]
+            const bg = gfx.backgrounds[s]
+            styleBg[s] = [projImg(S + "Sky", bg[0]), projImg(S + "Far", bg[1]), projImg(S + "Near", bg[2])]
+            const t = gfx.tilesets[s]
+            styleTiles[s] = [t[0], projTile(S + "GroundTop", t[1]), projTile(S + "Ground", t[2]), projTile(S + "Platform", t[3]),
+                projTile(S + "Spikes", t[4]), projTile(S + "Goal", t[5]), projTile(S + "Deco", t[6])]
+            walkerR[s] = projAnim(WALKER_TYPES[s] + "Walk", gfx.walkerR[s])
+            walkerL[s] = flipped(walkerR[s])
+            walkerDead[s] = projImg(WALKER_TYPES[s] + "Dead", gfx.walkerDead[s])
+            flyerR[s] = projAnim(FLYER_TYPES[s] + "Fly", gfx.flyerR[s])
+            flyerL[s] = flipped(flyerR[s])
+            flyerDead[s] = projImg(FLYER_TYPES[s] + "Dead", gfx.flyerDead[s])
+        }
+        for (let m = 0; m < MARKER_NAMES.length; m++) markerImgs[m] = projTile(MARKER_NAMES[m], gfx.markers[m])
+    }
+
+    // ---------------------------------------------------------------- Welten: Block > Tilemap "weltN" > eingebaut
+    function worldMap(i: number): tiles.TileMapData {
+        if (i < 0 || i >= MAX_WORLDS) return null
+        if (worldMaps[i]) return worldMaps[i]
+        const named = helpers.getTilemapByName("welt" + (i + 1))
+        if (named) return named
+        if (i < levels.count) return levels.tilemap(i)
+        return null
+    }
+    function worldStyle(i: number): number {
+        if (worldStyles[i] >= 0) return worldStyles[i]
+        if (i < levels.count) return levels.biomes[i]
+        return i % 3
+    }
+    function worldName(i: number): string {
+        const custom = worldMaps[i] || helpers.getTilemapByName("welt" + (i + 1))
+        if (!custom && i < levels.count) return levels.names[i]
+        return STYLE_TITLES[worldStyle(i)]
+    }
+    function countWorlds(): number {
+        let n = 0
+        while (n < MAX_WORLDS && worldMap(n)) n++
+        return n
+    }
 
     // ---------------------------------------------------------------- Parallax-Hintergrund
     // Drei Ebenen, die sich unterschiedlich schnell mit der Kamera bewegen.
@@ -115,11 +245,15 @@ namespace pixelquest {
     })
 
     // ---------------------------------------------------------------- Hilfen
-    function tileset(): Image[] { return gfx.tilesets[biome] }
+    function tileset(): Image[] { return styleTiles[biome] }
     function isOnGround(s: Sprite) { return s.isHittingTile(CollisionDirection.Bottom) }
-    function tileIs(col: number, row: number, img: Image) {
-        return tiles.tileAtLocationEquals(tiles.getTileLocation(col, row), img)
+    function tileIndexAt(col: number, row: number): number {
+        const tm = game.currentScene().tileMap
+        if (!tm || tm.data.isOutsideMap(col, row)) return -1
+        return tm.data.getTile(col, row)
     }
+    function isSpikeAt(col: number, row: number) { return spikeIdx.indexOf(tileIndexAt(col, row)) >= 0 }
+    function isGoalAt(col: number, row: number) { return goalIdx.indexOf(tileIndexAt(col, row)) >= 0 }
     function isWall(col: number, row: number) {
         return tiles.tileAtLocationIsWall(tiles.getTileLocation(col, row))
     }
@@ -136,6 +270,7 @@ namespace pixelquest {
     // ---------------------------------------------------------------- Spielfigur
     function createHero() {
         hero = sprites.create(gfx.heroIdleR[0], SpriteKind.Player)
+        hero.setFlag(SpriteFlag.Invisible, true)
         hero.ay = gravity
         hero.z = 10
         controller.moveSprite(hero, runSpeed, 0)
@@ -153,18 +288,17 @@ namespace pixelquest {
         else if (controller.right.isPressed()) facing = 1
         const r = facing > 0
         if (!isOnGround(hero)) {
-            if (hero.vy < 0) setHeroAnim(r ? "jumpR" : "jumpL", r ? gfx.heroJumpR : gfx.heroJumpL, 200)
-            else setHeroAnim(r ? "fallR" : "fallL", r ? gfx.heroFallR : gfx.heroFallL, 200)
+            if (hero.vy < 0) setHeroAnim(r ? "jumpR" : "jumpL", r ? heroJumpR : heroJumpL, 200)
+            else setHeroAnim(r ? "fallR" : "fallL", r ? heroFallR : heroFallL, 200)
         } else if (hero.vx != 0) {
-            setHeroAnim(r ? "runR" : "runL", r ? gfx.heroRunR : gfx.heroRunL, 90)
+            setHeroAnim(r ? "runR" : "runL", r ? heroRunR : heroRunL, 90)
         } else {
-            const idle = r ? gfx.heroIdleR : gfx.heroIdleL
-            setHeroAnim(r ? "idleR" : "idleL", [idle[0], idle[0], idle[0], idle[0], idle[1]], 250)
+            setHeroAnim(r ? "idleR" : "idleL", r ? heroIdleR : heroIdleL, 250)
         }
     }
 
     function jump() {
-        if (!hero || levelDone) return
+        if (!hero || levelDone || !running) return
         const grounded = isOnGround(hero) || game.runtime() - lastGrounded < 90
         if (grounded) {
             hero.vy = -jumpSpeed
@@ -202,7 +336,7 @@ namespace pixelquest {
 
     // ---------------------------------------------------------------- Gegner
     function spawnWalker(col: number, row: number) {
-        const e = sprites.create(gfx.walkerL[biome][0], SpriteKind.Enemy)
+        const e = sprites.create(walkerL[biome][0], SpriteKind.Enemy)
         tiles.placeOnTile(e, tiles.getTileLocation(col, row))
         e.ay = gravity
         e.data["flyer"] = false
@@ -212,7 +346,7 @@ namespace pixelquest {
     }
 
     function spawnFlyer(col: number, row: number) {
-        const e = sprites.create(gfx.flyerL[biome][0], SpriteKind.Enemy)
+        const e = sprites.create(flyerL[biome][0], SpriteKind.Enemy)
         tiles.placeOnTile(e, tiles.getTileLocation(col, row))
         e.setFlag(SpriteFlag.GhostThroughWalls, true)
         e.data["flyer"] = true
@@ -227,9 +361,10 @@ namespace pixelquest {
     function setEnemyDirection(e: Sprite, dir: number) {
         e.data["dir"] = dir
         const flyer = e.data["flyer"]
-        const speed = (flyer ? FLYER_SPEED[level] : WALKER_SPEED[level]) * enemySpeedPercent / 100
+        const d = Math.min(level, 2)
+        const speed = (flyer ? FLYER_SPEED[d] : WALKER_SPEED[d]) * enemySpeedPercent / 100
         e.vx = dir * speed
-        const frames = flyer ? (dir > 0 ? gfx.flyerR[biome] : gfx.flyerL[biome]) : (dir > 0 ? gfx.walkerR[biome] : gfx.walkerL[biome])
+        const frames = flyer ? (dir > 0 ? flyerR[biome] : flyerL[biome]) : (dir > 0 ? walkerR[biome] : walkerL[biome])
         animation.runImageAnimation(e, frames, flyer ? 100 : 160, true)
     }
 
@@ -237,7 +372,7 @@ namespace pixelquest {
         if (e.data["dead"]) return
         e.data["dead"] = true
         animation.stopAnimation(animation.AnimationTypes.All, e)
-        e.setImage(e.data["flyer"] ? gfx.flyerDead[biome] : gfx.walkerDead[biome])
+        e.setImage(e.data["flyer"] ? flyerDead[biome] : walkerDead[biome])
         e.setFlag(SpriteFlag.GhostThroughWalls, true)
         e.vx = 0
         e.vy = e.data["flyer"] ? 0 : -40
@@ -263,7 +398,7 @@ namespace pixelquest {
                     const col = Math.floor(aheadX / 16)
                     const row = Math.floor((e.bottom - 1) / 16)
                     // an Abgründen, Wänden und Stacheln umdrehen
-                    if (!isWall(col, row + 1) || isWall(col, row) || tileIs(col, row, tileset()[4])) setEnemyDirection(e, -dir)
+                    if (!isWall(col, row + 1) || isWall(col, row) || isSpikeAt(col, row)) setEnemyDirection(e, -dir)
                 }
             }
         }
@@ -273,12 +408,12 @@ namespace pixelquest {
     function spawnItem(kind: number, x: number, y: number, pop: boolean) {
         let s: Sprite
         if (kind == SpriteKind.Coin) {
-            s = sprites.create(gfx.coin[0], kind)
-            animation.runImageAnimation(s, gfx.coin, 120, true)
+            s = sprites.create(coinFrames[0], kind)
+            animation.runImageAnimation(s, coinFrames, 120, true)
         } else if (kind == SpriteKind.Gem) {
-            s = sprites.create(gfx.gem, kind)
+            s = sprites.create(gemImg, kind)
         } else {
-            s = sprites.create(gfx.heart, kind)
+            s = sprites.create(heartImg, kind)
         }
         s.setPosition(x, y)
         s.data["ready"] = game.runtime() + (pop ? 350 : 0)
@@ -292,7 +427,7 @@ namespace pixelquest {
     }
 
     function spawnChest(col: number, row: number, withHeart: boolean) {
-        const c = sprites.create(gfx.chestClosed, SpriteKind.Chest)
+        const c = sprites.create(chestClosedImg, SpriteKind.Chest)
         tiles.placeOnTile(c, tiles.getTileLocation(col, row))
         c.data["heart"] = withHeart
         c.data["open"] = false
@@ -325,7 +460,7 @@ namespace pixelquest {
     sprites.onOverlap(SpriteKind.Player, SpriteKind.Chest, function (p, chest) {
         if (chest.data["open"]) return
         chest.data["open"] = true
-        chest.setImage(gfx.chestOpen)
+        chest.setImage(chestOpenImg)
         sfx.play(sfx.chest)
         if (chest.data["heart"]) {
             spawnItem(SpriteKind.Heart, chest.x, chest.y - 6, true)
@@ -350,12 +485,12 @@ namespace pixelquest {
     })
 
     function attack() {
-        if (weapon == W_NONE || !hero || levelDone) return
+        if (weapon == W_NONE || !hero || levelDone || !running) return
         const now = game.runtime()
         if (weapon == W_SWORD) {
             if (now - lastAttack < 350) return
             lastAttack = now
-            const s = sprites.create(facing > 0 ? gfx.slashR : gfx.slashL, SpriteKind.Slash)
+            const s = sprites.create(facing > 0 ? slashR : slashL, SpriteKind.Slash)
             s.setFlag(SpriteFlag.GhostThroughWalls, true)
             s.data["dir"] = facing
             s.data["hit"] = false
@@ -365,7 +500,7 @@ namespace pixelquest {
         } else {
             if (now - lastAttack < 280) return
             lastAttack = now
-            const img = gfx.shot.clone()
+            const img = shotImg.clone()
             if (facing < 0) img.flipX()
             const b = sprites.create(img, SpriteKind.PlayerShot)
             b.setPosition(hero.x + facing * 6, hero.y)
@@ -407,7 +542,7 @@ namespace pixelquest {
 
     // ---------------------------------------------------------------- Endboss
     function spawnBoss(col: number, row: number) {
-        boss = sprites.create(gfx.bossWalkL[0], SpriteKind.Boss)
+        boss = sprites.create(bossWalkL[0], SpriteKind.Boss)
         tiles.placeOnTile(boss, tiles.getTileLocation(col, row))
         boss.ay = gravity
         bossActive = false
@@ -424,7 +559,8 @@ namespace pixelquest {
         bossBar.attachToSprite(boss, 3, 0)
         // Tor hinter dem Spieler schliessen
         if (gateCol >= 0) {
-            for (let r = 1; r <= 7; r++) {
+            const rows = game.currentScene().tileMap.data.height
+            for (let r = 1; r <= rows - 3; r++) {
                 const loc = tiles.getTileLocation(gateCol, r)
                 tiles.setTileAt(loc, tileset()[2])
                 tiles.setWallAt(loc, true)
@@ -456,7 +592,7 @@ namespace pixelquest {
             bossAttackUntil = now + 300
             const speeds = angry ? [-40, 0, 40] : [0]
             for (const vy of speeds) {
-                const f = sprites.create(gfx.fire, SpriteKind.EnemyShot)
+                const f = sprites.create(fireImg, SpriteKind.EnemyShot)
                 f.setPosition(boss.x + bossFacing * 14, boss.y - 2)
                 f.vx = bossFacing * 90
                 f.vy = vy
@@ -466,11 +602,11 @@ namespace pixelquest {
             sfx.play(sfx.enemyShot)
         }
         // Bild wählen: Treffer-Blitz > Angriff > Laufen
-        if (now < bossFlashUntil) boss.setImage(gfx.bossHurt)
-        else if (now < bossAttackUntil) boss.setImage(bossFacing > 0 ? gfx.bossAttackR : gfx.bossAttackL)
+        if (now < bossFlashUntil) boss.setImage(bossHurtImg)
+        else if (now < bossAttackUntil) boss.setImage(bossFacing > 0 ? bossAttackR : bossAttackL)
         else {
-            const frames = bossFacing > 0 ? gfx.bossWalkR : gfx.bossWalkL
-            boss.setImage(frames[Math.floor(now / 250) % 2])
+            const frames = bossFacing > 0 ? bossWalkR : bossWalkL
+            boss.setImage(frames[Math.floor(now / 250) % frames.length])
         }
     }
 
@@ -493,7 +629,7 @@ namespace pixelquest {
         boss = null
         sprites.destroyAllSpritesOfKind(SpriteKind.EnemyShot)
         sfx.play(sfx.enemyDeath)
-        pendingLevel = 99 // Sieg
+        pendingLevel = level + 1 // nächste Welt oder Sieg
         if (bossHandler) bossHandler()
     }
 
@@ -512,14 +648,12 @@ namespace pixelquest {
     // Eigene Prüfung statt scene.onOverlapTile: der MakeCode-Compiler erlaubt dort
     // nur feste Kachelbilder, die Engine wählt die Kacheln aber je nach Welt.
     function checkHeroTiles() {
-        const ts = tileset()
         const c0 = Math.floor((hero.left + 2) / 16), c1 = Math.floor((hero.right - 2) / 16)
         const r0 = Math.floor((hero.top + 2) / 16), r1 = Math.floor((hero.bottom - 1) / 16)
         for (let c = c0; c <= c1; c++) {
             for (let r = r0; r <= r1; r++) {
-                const loc = tiles.getTileLocation(c, r)
-                if (tiles.tileAtLocationEquals(loc, ts[4]) && hero.bottom > loc.y - 2) hurtHero()
-                if (tiles.tileAtLocationEquals(loc, ts[5]) && !levelDone) {
+                if (isSpikeAt(c, r) && hero.bottom > r * 16 + 6) hurtHero()
+                if (isGoalAt(c, r) && !levelDone) {
                     levelDone = true
                     pendingLevel = level + 1
                 }
@@ -530,32 +664,62 @@ namespace pixelquest {
     // ---------------------------------------------------------------- Level laden
     function loadLevel(i: number) {
         level = i
-        biome = levels.biomes[i]
+        biome = worldStyle(i)
         levelDone = false
         clearLevelSprites()
-        tiles.setCurrentTilemap(levels.tilemap(i))
-        bgLayers = gfx.backgrounds[biome]
+        tiles.setCurrentTilemap(worldMap(i))
+        bgLayers = styleBg[biome]
         scene.setBackgroundColor(biome == 0 ? 9 : 15)
 
-        const sp = levels.spawns[i]
-        for (let k = 0; k < sp.length; k += 3) {
-            const t = sp[k], col = sp[k + 1], row = sp[k + 2]
-            const loc = tiles.getTileLocation(col, row)
-            if (t == S_PLAYER) {
-                tiles.placeOnTile(hero, loc)
-                checkpointX = hero.x
-                checkpointY = hero.y
+        // Kachelsatz der Karte einordnen: Markierungen, Stacheln, Ziel (Vergleich über den Bildinhalt)
+        const data = game.currentScene().tileMap.data
+        const ts = data.getTileset()
+        const markerOf: number[] = []
+        spikeIdx = []
+        goalIdx = []
+        for (let k = 0; k < ts.length; k++) {
+            let m = -1
+            for (let j = 0; j < markerImgs.length; j++) if (ts[k].equals(markerImgs[j]) || ts[k].equals(gfx.markers[j])) { m = j; break }
+            markerOf.push(m)
+            for (let s = 0; s < 3; s++) {
+                if (ts[k].equals(styleTiles[s][4]) || ts[k].equals(gfx.tilesets[s][4])) spikeIdx.push(k)
+                if (ts[k].equals(styleTiles[s][5]) || ts[k].equals(gfx.tilesets[s][5])) goalIdx.push(k)
             }
-            else if (t == S_COIN) spawnItem(SpriteKind.Coin, loc.x, loc.y, false)
-            else if (t == S_GEM) spawnItem(SpriteKind.Gem, loc.x, loc.y, false)
-            else if (t == S_HEART) spawnItem(SpriteKind.Heart, loc.x, loc.y, false)
-            else if (t == S_CHEST) spawnChest(col, row, false)
-            else if (t == S_CHEST_HEART) spawnChest(col, row, true)
-            else if (t == S_WALKER) spawnWalker(col, row)
-            else if (t == S_FLYER) spawnFlyer(col, row)
-            else if (t == S_BOSS) spawnBoss(col, row)
-            else if (t == S_GATE) gateCol = col
         }
+        // Markierungen durch Spielobjekte ersetzen
+        bossWorld = false
+        let startFound = false
+        for (let r = 0; r < data.height; r++) {
+            for (let c = 0; c < data.width; c++) {
+                const m = markerOf[data.getTile(c, r)]
+                if (m === undefined || m < 0) continue
+                data.setTile(c, r, 0)
+                data.setWall(c, r, false)
+                const loc = tiles.getTileLocation(c, r)
+                if (m == M_START) {
+                    tiles.placeOnTile(hero, loc)
+                    checkpointX = hero.x
+                    checkpointY = hero.y
+                    startFound = true
+                }
+                else if (m == M_COIN) spawnItem(SpriteKind.Coin, loc.x, loc.y, false)
+                else if (m == M_GEM) spawnItem(SpriteKind.Gem, loc.x, loc.y, false)
+                else if (m == M_HEART) spawnItem(SpriteKind.Heart, loc.x, loc.y, false)
+                else if (m == M_CHEST) spawnChest(c, r, false)
+                else if (m == M_CHEST_HEART) spawnChest(c, r, true)
+                else if (m == M_WALKER) spawnWalker(c, r)
+                else if (m == M_FLYER) spawnFlyer(c, r)
+                else if (m == M_BOSS) { spawnBoss(c, r); bossWorld = true }
+                else if (m == M_GATE) gateCol = c
+            }
+        }
+        if (!startFound) {
+            // ohne Startkachel: links oben über dem Boden beginnen
+            tiles.placeOnTile(hero, tiles.getTileLocation(1, 1))
+            checkpointX = hero.x
+            checkpointY = hero.y
+        }
+        hero.setFlag(SpriteFlag.Invisible, false)
         hero.vx = 0
         hero.vy = 0
         heroAnim = ""
@@ -563,8 +727,8 @@ namespace pixelquest {
         invincibleUntil = 0
 
         controller.moveSprite(hero, 0, 0)
-        game.splash("Welt " + (i + 1) + ": " + levels.names[i], i == 0 && doubleJumpEnabled ? "2x A = Doppelsprung" : "")
-        if (i == levels.count - 1) chooseWeapon()
+        game.splash("Welt " + (i + 1) + ": " + worldName(i), i == 0 && doubleJumpEnabled ? "2x A = Doppelsprung" : "")
+        if (bossWorld && weapon == W_NONE) chooseWeapon()
         controller.moveSprite(hero, runSpeed, 0)
         if (worldHandler) worldHandler(i + 1)
     }
@@ -577,7 +741,7 @@ namespace pixelquest {
         pendingLevel = -1
         controller.moveSprite(hero, 0, 0)
         hero.vx = 0
-        if (next >= levels.count) {
+        if (next >= worldCount) {
             pause(800)
             game.setGameOverMessage(true, "Du hast gewonnen!")
             game.over(true)
@@ -598,21 +762,22 @@ namespace pixelquest {
 
     // ---------------------------------------------------------------- Spielschleife
     game.onUpdate(function () {
-        if (!hero) return
+        if (!hero || !running) return
         const now = game.runtime()
         if (isOnGround(hero)) {
             lastGrounded = now
             jumpsLeft = 1
             // Kontrollpunkt merken (nur auf sicherem Boden)
             const col = Math.floor(hero.x / 16), row = Math.floor((hero.bottom - 1) / 16)
-            if (now > invincibleUntil && !tileIs(col, row, tileset()[4]) && isWall(col, row + 1)
+            if (now > invincibleUntil && !isSpikeAt(col, row) && isWall(col, row + 1)
                 && isWall(Math.floor((hero.left + 1) / 16), row + 1) && isWall(Math.floor((hero.right - 1) / 16), row + 1)) {
                 checkpointX = hero.x
                 checkpointY = hero.y
             }
         }
-        // In den Abgrund gefallen
-        if (hero.top > game.currentScene().tileMap.areaHeight() && !levelDone) {
+        // In den Abgrund gefallen: der Kartenrand wirkt in MakeCode wie eine Wand,
+        // deshalb zählt schon das Erreichen des unteren Rands als Absturz.
+        if (hero.bottom >= game.currentScene().tileMap.areaHeight() - 2 && !levelDone) {
             invincibleUntil = 0
             hurtHero()
             if (info.life() > 0) respawnHero()
@@ -635,18 +800,28 @@ namespace pixelquest {
     //% blockId=pq_start block="starte Pixel-Quest"
     //% group="Start" weight=100
     export function startGame() {
-        if (hero) return
+        if (started) return
+        started = true
+        createHero()
+        // Erst nach dem restlichen Startcode weitermachen: dann sind die Projekt-Assets
+        // registriert und alle Einstellungs-Blöcke ausgeführt.
+        control.runInParallel(runGame)
+    }
+
+    function runGame() {
+        resolveAssets()
+        worldCount = countWorlds()
         game.setGameOverPlayable(true, sfx.winTune, false)
         game.setGameOverPlayable(false, sfx.endTune, false)
         info.setScore(0)
         info.setLife(startLives)
-        createHero()
-        biome = 0
-        bgLayers = gfx.backgrounds[0]
-        tiles.setCurrentTilemap(levels.tilemap(0))
+        biome = worldStyle(0)
+        bgLayers = styleBg[biome]
+        scene.setBackgroundColor(biome == 0 ? 9 : 15)
         sfx.play(sfx.startTune)
-        game.splash(title, "3 Welten - druecke A")
-        loadLevel(startWorld)
+        game.splash(title, worldCount + " Welten - druecke A")
+        running = true
+        loadLevel(Math.min(startWorld, worldCount - 1))
     }
 
     //% blockId=pq_title block="setze Titel auf $text"
@@ -655,9 +830,35 @@ namespace pixelquest {
     export function setTitle(text: string) { title = text }
 
     //% blockId=pq_start_world block="beginne in Welt $world"
-    //% world.min=1 world.max=3 world.defl=1
+    //% world.min=1 world.max=9 world.defl=1
     //% group="Start" weight=80
-    export function setStartWorld(world: number) { startWorld = Math.clamp(0, levels.count - 1, world - 1) }
+    export function setStartWorld(world: number) { startWorld = Math.clamp(0, MAX_WORLDS - 1, world - 1) }
+
+    /**
+     * Legt Karte und Stil einer Welt fest. Die Karte im Tilemap-Editor malen; Spielobjekte
+     * mit den Markierungs-Kacheln pqStart, pqCoin, pqWalker ... setzen. Ohne diesen Block gilt:
+     * Tilemap "weltN" aus dem Projekt, sonst die eingebaute Welt.
+     */
+    //% blockId=pq_set_world block="Welt $world Karte $map Stil $style"
+    //% world.min=1 world.max=9 world.defl=1
+    //% map.shadow=tiles_tilemap_editor
+    //% inlineInputMode=inline
+    //% group="Welten" weight=100
+    export function setWorld(world: number, map: tiles.TileMapData, style: Style) {
+        const i = Math.clamp(1, MAX_WORLDS, world) - 1
+        worldMaps[i] = map
+        worldStyles[i] = style
+    }
+
+    /**
+     * Ändert nur den Stil einer Welt (Hintergrund, Kacheln, Gegner), die Karte bleibt.
+     */
+    //% blockId=pq_set_world_style block="Welt $world Stil $style"
+    //% world.min=1 world.max=9 world.defl=1
+    //% group="Welten" weight=90
+    export function setWorldStyle(world: number, style: Style) {
+        worldStyles[Math.clamp(1, MAX_WORLDS, world) - 1] = style
+    }
 
     //% blockId=pq_lives block="setze Leben auf $lives"
     //% lives.min=1 lives.max=9 lives.defl=3
@@ -728,4 +929,8 @@ namespace pixelquest {
     //% blockId=pq_world block="aktuelle Welt"
     //% group="Werte" weight=90
     export function currentWorld(): number { return level + 1 }
+
+    //% blockId=pq_world_count block="Anzahl Welten"
+    //% group="Werte" weight=80
+    export function worldTotal(): number { return worldCount }
 }
