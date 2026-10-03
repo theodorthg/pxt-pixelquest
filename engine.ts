@@ -63,16 +63,23 @@ namespace pixelquest {
         //% block="Weltall"
         Space = 4,
         //% block="Wüste"
-        Desert = 5
+        Desert = 5,
+        //% block="Eis"
+        Ice = 6,
+        //% block="Magie"
+        Magic = 7
     }
-    const STYLE_NAMES = ["grass", "scifi", "dungeon", "underwater", "space", "desert"]
-    const STYLE_TITLES = ["Gruene Wiesen", "Neon-Station", "Verlies", "Korallenriff", "Mondkrater", "Glutwueste"]
-    const STYLE_BG_COLOR = [9, 15, 15, 8, 15, 9]
+    const STYLE_NAMES = ["grass", "scifi", "dungeon", "underwater", "space", "desert", "ice", "magic"]
+    const STYLE_TITLES = ["Gruene Wiesen", "Neon-Station", "Verlies", "Korallenriff", "Mondkrater", "Glutwueste", "Polarnacht", "Zauberwald"]
+    const STYLE_BG_COLOR = [9, 15, 15, 8, 15, 9, 15, 12]
     // Physik je Stil in Prozent: Schwerkraft und Sprungkraft (Weltall: schwebende, weite Sprünge)
-    const STYLE_GRAVITY = [100, 100, 100, 40, 45, 100]
-    const STYLE_JUMP = [100, 100, 100, 100, 72, 100]
-    const WALKER_TYPES = ["slime", "robot", "skeleton", "crab", "alien", "scorpion"]
-    const FLYER_TYPES = ["bird", "drone", "bat", "fish", "ufo", "vulture"]
+    const STYLE_GRAVITY = [100, 100, 100, 40, 45, 100, 100, 100]
+    const STYLE_JUMP = [100, 100, 100, 100, 72, 100, 100, 100]
+    // Eis: Figur beschleunigt und bremst langsam (Anteil pro Frame in Prozent, Boden / Luft)
+    const ICE_GRIP = 4
+    const ICE_AIR_GRIP = 8
+    const WALKER_TYPES = ["slime", "robot", "skeleton", "crab", "alien", "scorpion", "penguin", "shroom"]
+    const FLYER_TYPES = ["bird", "drone", "bat", "fish", "ufo", "vulture", "owl", "wisp"]
     const MARKER_NAMES = ["pqStart", "pqCoin", "pqGem", "pqHeart", "pqChest", "pqChestHeart", "pqWalker", "pqFlyer", "pqBoss", "pqGate"]
     const MAX_WORLDS = 9
 
@@ -125,6 +132,8 @@ namespace pixelquest {
     let swimming = false
     let worldGravity = 400
     let worldJump = 100
+    let slippery = false
+    let controlsOn = false
     let lastStroke = 0
     const WATER_MAX_SINK = 60
     const WATER_STROKE = 95
@@ -290,8 +299,23 @@ namespace pixelquest {
         hero.setFlag(SpriteFlag.Invisible, true)
         hero.ay = gravity
         hero.z = 10
-        controller.moveSprite(hero, runSpeed, 0)
         scene.cameraFollowSprite(hero)
+    }
+
+    // Steuerung an/aus; auf Eis übernimmt die Spielschleife die Bewegung mit Trägheit
+    function setControls(on: boolean) {
+        controlsOn = on
+        controller.moveSprite(hero, on && !slippery ? runSpeed : 0, 0)
+    }
+
+    function updateIceMovement() {
+        if (!slippery || !controlsOn) return
+        let dir = 0
+        if (controller.left.isPressed()) dir--
+        if (controller.right.isPressed()) dir++
+        const grip = isOnGround(hero) ? ICE_GRIP : ICE_AIR_GRIP
+        hero.vx += (dir * runSpeed - hero.vx) * grip / 100
+        if (dir == 0 && Math.abs(hero.vx) < 3) hero.vx = 0
     }
 
     function setHeroAnim(name: string, frames: Image[], interval: number) {
@@ -307,7 +331,7 @@ namespace pixelquest {
         if (!isOnGround(hero)) {
             if (hero.vy < 0) setHeroAnim(r ? "jumpR" : "jumpL", r ? heroJumpR : heroJumpL, 200)
             else setHeroAnim(r ? "fallR" : "fallL", r ? heroFallR : heroFallL, 200)
-        } else if (hero.vx != 0) {
+        } else if (Math.abs(hero.vx) > 4) {
             setHeroAnim(r ? "runR" : "runL", r ? heroRunR : heroRunL, 90)
         } else {
             setHeroAnim(r ? "idleR" : "idleL", r ? heroIdleR : heroIdleL, 250)
@@ -699,6 +723,7 @@ namespace pixelquest {
         swimming = biome == Style.Underwater
         worldGravity = Math.round(gravity * STYLE_GRAVITY[biome] / 100)
         worldJump = STYLE_JUMP[biome]
+        slippery = biome == Style.Ice
         hero.ay = worldGravity
 
         // Kachelsatz der Karte einordnen: Markierungen, Stacheln, Ziel (Vergleich über den Bildinhalt)
@@ -756,10 +781,10 @@ namespace pixelquest {
         facing = 1
         invincibleUntil = 0
 
-        controller.moveSprite(hero, 0, 0)
-        game.splash("Welt " + (i + 1) + ": " + worldName(i), swimming ? "A = schwimmen" : biome == Style.Space ? "Wenig Schwerkraft!" : (i == 0 && doubleJumpEnabled ? "2x A = Doppelsprung" : ""))
+        setControls(false)
+        game.splash("Welt " + (i + 1) + ": " + worldName(i), swimming ? "A = schwimmen" : biome == Style.Space ? "Wenig Schwerkraft!" : slippery ? "Vorsicht, glatt!" : (i == 0 && doubleJumpEnabled ? "2x A = Doppelsprung" : ""))
         if (bossWorld && weapon == W_NONE) chooseWeapon()
-        controller.moveSprite(hero, runSpeed, 0)
+        setControls(true)
         if (worldHandler) worldHandler(i + 1)
     }
 
@@ -769,7 +794,7 @@ namespace pixelquest {
         if (pendingLevel < 0) return
         const next = pendingLevel
         pendingLevel = -1
-        controller.moveSprite(hero, 0, 0)
+        setControls(false)
         hero.vx = 0
         if (next >= worldCount) {
             pause(800)
@@ -783,7 +808,7 @@ namespace pixelquest {
 
     info.onLifeZero(function () {
         levelDone = true
-        controller.moveSprite(hero, 0, 0)
+        setControls(false)
         hero.vx = 0
         pause(500)
         game.setGameOverMessage(false, "Game Over")
@@ -815,6 +840,7 @@ namespace pixelquest {
         if (swimming && hero.vy > WATER_MAX_SINK) hero.vy = WATER_MAX_SINK
         // Blinken während Unverwundbarkeit
         hero.setFlag(SpriteFlag.Invisible, now < invincibleUntil && Math.floor(now / 80) % 2 == 0)
+        updateIceMovement()
         checkHeroTiles()
         updateHeroAnimation()
         updateEnemies()

@@ -1,7 +1,7 @@
 // Gemeinsame Einstellungen für build-assets.js (eingebaute Grafiken/Sounds der Erweiterung)
 // und build-game.js (Projekt-Assets des Spiels). Gleiche Werte = gleiches Aussehen.
 module.exports = {
-    seeds: { grass: '1', scifi: '7', dungeon: '3', underwater: '1', space: '1', desert: '1' },
+    seeds: { grass: '1', scifi: '7', dungeon: '3', underwater: '1', space: '1', desert: '1', ice: '1', magic: '1' },
     enemySeed: '5',
     bossType: 'knight', bossSeed: '2',
     itemSeed: '1',

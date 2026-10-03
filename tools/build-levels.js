@@ -13,7 +13,7 @@ const fs = require('fs'), path = require('path');
 const TILE = { '.': 0, '#': 2, '=': 3, '^': 4, 'G': 5, 'd': 6 };
 const WALL = new Set(['#', '=']);
 const MARKER_CHARS = 'PcghCHefBX';   // -> Kachel 7..16 = gfx.markers[0..9] (Reihenfolge wie im Generator)
-const BIOMES = ['grass', 'scifi', 'dungeon', 'underwater', 'space', 'desert'];
+const BIOMES = ['grass', 'scifi', 'dungeon', 'underwater', 'space', 'desert', 'ice', 'magic'];
 
 const dir = path.join(__dirname, '../levels');
 const files = fs.readdirSync(dir).filter(f => /^level\d+\.txt$/.test(f)).sort();
