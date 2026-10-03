@@ -59,13 +59,18 @@ namespace pixelquest {
         //% block="Dungeon"
         Dungeon = 2,
         //% block="Unter Wasser"
-        Underwater = 3
+        Underwater = 3,
+        //% block="Weltall"
+        Space = 4
     }
-    const STYLE_NAMES = ["grass", "scifi", "dungeon", "underwater"]
-    const STYLE_TITLES = ["Gruene Wiesen", "Neon-Station", "Verlies", "Korallenriff"]
-    const STYLE_BG_COLOR = [9, 15, 15, 8]
-    const WALKER_TYPES = ["slime", "robot", "skeleton", "crab"]
-    const FLYER_TYPES = ["bird", "drone", "bat", "fish"]
+    const STYLE_NAMES = ["grass", "scifi", "dungeon", "underwater", "space"]
+    const STYLE_TITLES = ["Gruene Wiesen", "Neon-Station", "Verlies", "Korallenriff", "Mondkrater"]
+    const STYLE_BG_COLOR = [9, 15, 15, 8, 15]
+    // Physik je Stil in Prozent: Schwerkraft und Sprungkraft (Weltall: schwebende, weite Sprünge)
+    const STYLE_GRAVITY = [100, 100, 100, 40, 45]
+    const STYLE_JUMP = [100, 100, 100, 100, 72]
+    const WALKER_TYPES = ["slime", "robot", "skeleton", "crab", "alien"]
+    const FLYER_TYPES = ["bird", "drone", "bat", "fish", "ufo"]
     const MARKER_NAMES = ["pqStart", "pqCoin", "pqGem", "pqHeart", "pqChest", "pqChestHeart", "pqWalker", "pqFlyer", "pqBoss", "pqGate"]
     const MAX_WORLDS = 9
 
@@ -117,8 +122,8 @@ namespace pixelquest {
     // Unter Wasser: weniger Schwerkraft, langsames Sinken, mit A beliebig oft schwimmen
     let swimming = false
     let worldGravity = 400
+    let worldJump = 100
     let lastStroke = 0
-    const WATER_GRAVITY_PERCENT = 40
     const WATER_MAX_SINK = 60
     const WATER_STROKE = 95
 
@@ -319,13 +324,13 @@ namespace pixelquest {
         }
         const grounded = isOnGround(hero) || game.runtime() - lastGrounded < 90
         if (grounded) {
-            hero.vy = -jumpSpeed
+            hero.vy = -jumpSpeed * worldJump / 100
             jumpsLeft = 1
             lastGrounded = 0
             sfx.play(sfx.jump)
         } else if (doubleJumpEnabled && jumpsLeft > 0) {
             jumpsLeft--
-            hero.vy = -doubleJumpSpeed
+            hero.vy = -doubleJumpSpeed * worldJump / 100
             sfx.play(sfx.doubleJump)
             hero.startEffect(effects.trail, 200)
         }
@@ -334,7 +339,8 @@ namespace pixelquest {
     controller.up.onEvent(ControllerButtonEvent.Pressed, jump)
     // kurzer Tastendruck = kleiner Sprung
     controller.A.onEvent(ControllerButtonEvent.Released, function () {
-        if (hero && !swimming && hero.vy < -70) hero.vy = -70
+        const cut = 70 * worldJump / 100
+        if (hero && !swimming && hero.vy < -cut) hero.vy = -cut
     })
 
     function hurtHero() {
@@ -689,7 +695,8 @@ namespace pixelquest {
         bgLayers = styleBg[biome]
         scene.setBackgroundColor(STYLE_BG_COLOR[biome])
         swimming = biome == Style.Underwater
-        worldGravity = swimming ? Math.round(gravity * WATER_GRAVITY_PERCENT / 100) : gravity
+        worldGravity = Math.round(gravity * STYLE_GRAVITY[biome] / 100)
+        worldJump = STYLE_JUMP[biome]
         hero.ay = worldGravity
 
         // Kachelsatz der Karte einordnen: Markierungen, Stacheln, Ziel (Vergleich über den Bildinhalt)
@@ -748,7 +755,7 @@ namespace pixelquest {
         invincibleUntil = 0
 
         controller.moveSprite(hero, 0, 0)
-        game.splash("Welt " + (i + 1) + ": " + worldName(i), swimming ? "A = schwimmen" : (i == 0 && doubleJumpEnabled ? "2x A = Doppelsprung" : ""))
+        game.splash("Welt " + (i + 1) + ": " + worldName(i), swimming ? "A = schwimmen" : biome == Style.Space ? "Wenig Schwerkraft!" : (i == 0 && doubleJumpEnabled ? "2x A = Doppelsprung" : ""))
         if (bossWorld && weapon == W_NONE) chooseWeapon()
         controller.moveSprite(hero, runSpeed, 0)
         if (worldHandler) worldHandler(i + 1)
