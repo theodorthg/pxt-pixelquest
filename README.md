@@ -2,7 +2,7 @@
 
 > In MakeCode Arcade nutzen: **Erweiterungen** → `https://github.com/theodorthg/pxt-pixelquest` einfügen.
 
-Jump & Run-Engine für MakeCode Arcade: 3 Welten (Gras, SciFi, Dungeon), animierte Figuren und Gegner,
+Jump & Run-Engine für MakeCode Arcade: 3 eingebaute Welten, 4 Stile (Gras, SciFi, Dungeon, Unter Wasser), animierte Figuren und Gegner,
 Doppelsprung, Truhen, Endboss mit Statusleiste und wählbarer Waffe. Alle Grafiken und Sounds sind mit dem
 Arcade Asset Generator prozedural erzeugt.
 
@@ -18,7 +18,8 @@ pixelquest.startGame()
 ```
 
 - **Start:** `starte Pixel-Quest`, `setze Titel auf …`, `beginne in Welt …`
-- **Welten:** `Welt … Karte [Tilemap] Stil [Gras/SciFi/Dungeon]`, `Welt … Stil …` (bis zu 9 Welten)
+- **Unter Wasser:** weniger Schwerkraft, langsames Sinken; A (oder ↑) beliebig oft drücken = schwimmen.
+- **Welten:** `Welt … Karte [Tilemap] Stil [Gras/SciFi/Dungeon/Unter Wasser]`, `Welt … Stil …` (bis zu 9 Welten)
 - **Einstellungen:** Leben, maximale Leben, Laufgeschwindigkeit, Sprungkraft, Doppelsprung an/aus und Kraft,
   Schwerkraft, Gegner-Tempo, Boss-Energie
 - **Ereignisse:** wenn Münze gesammelt, wenn Gegner besiegt, wenn Welt … beginnt, wenn Boss besiegt
@@ -36,11 +37,12 @@ nimmt sie ihre eingebaute Grafik. Am einfachsten startet man mit einem Pixel-Que
 | | Bild | `heroJump`, `heroFall` |
 | Boss | Animation / Bild | `bossWalk` / `bossAttack`, `bossHurt` |
 | Items & Waffen | Animation / Bild | `coinSpin` / `gem`, `heart`, `shot`, `fire`, `slash`, `chestClosed`, `chestOpen` |
-| Hintergrund je Stil | Bild 160×120 | `grassSky`, `grassFar`, `grassNear` (ebenso `scifi…`, `dungeon…`) |
-| Kacheln je Stil | Kachel | `grassGroundTop`, `grassGround`, `grassPlatform`, `grassSpikes`, `grassGoal`, `grassDeco` (ebenso `scifi…`, `dungeon…`) |
+| Hintergrund je Stil | Bild 160×120 | `grassSky`, `grassFar`, `grassNear` (ebenso `scifi…`, `dungeon…`, `underwater…`) |
+| Kacheln je Stil | Kachel | `grassGroundTop`, `grassGround`, `grassPlatform`, `grassSpikes`, `grassGoal`, `grassDeco` (ebenso `scifi…`, `dungeon…`, `underwater…`) |
 | Gegner Gras | Animation / Bild | `slimeWalk`, `birdFly` / `slimeDead`, `birdDead` |
 | Gegner SciFi | Animation / Bild | `robotWalk`, `droneFly` / `robotDead`, `droneDead` |
 | Gegner Dungeon | Animation / Bild | `skeletonWalk`, `batFly` / `skeletonDead`, `batDead` |
+| Gegner Unter Wasser | Animation / Bild | `crabWalk`, `fishFly` / `crabDead`, `fishDead` |
 
 Gespiegelte Bilder (nach links) erzeugt die Engine selbst.
 

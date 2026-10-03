@@ -5,7 +5,7 @@ const G = require('../../generator/assetgen.js');
 const S = require('../../generator/soundgen.js');
 
 const CONFIG = require('./config.js');
-const BIOMES = ['grass', 'scifi', 'dungeon'];
+const BIOMES = ['grass', 'scifi', 'dungeon', 'underwater'];
 const cap = s => s[0].toUpperCase() + s.slice(1);
 const flip = frames => frames.map(f => f.flipX());
 const empty = new G.Pix(16, 16);

@@ -57,12 +57,15 @@ namespace pixelquest {
         //% block="SciFi"
         SciFi = 1,
         //% block="Dungeon"
-        Dungeon = 2
+        Dungeon = 2,
+        //% block="Unter Wasser"
+        Underwater = 3
     }
-    const STYLE_NAMES = ["grass", "scifi", "dungeon"]
-    const STYLE_TITLES = ["Gruene Wiesen", "Neon-Station", "Verlies"]
-    const WALKER_TYPES = ["slime", "robot", "skeleton"]
-    const FLYER_TYPES = ["bird", "drone", "bat"]
+    const STYLE_NAMES = ["grass", "scifi", "dungeon", "underwater"]
+    const STYLE_TITLES = ["Gruene Wiesen", "Neon-Station", "Verlies", "Korallenriff"]
+    const STYLE_BG_COLOR = [9, 15, 15, 8]
+    const WALKER_TYPES = ["slime", "robot", "skeleton", "crab"]
+    const FLYER_TYPES = ["bird", "drone", "bat", "fish"]
     const MARKER_NAMES = ["pqStart", "pqCoin", "pqGem", "pqHeart", "pqChest", "pqChestHeart", "pqWalker", "pqFlyer", "pqBoss", "pqGate"]
     const MAX_WORLDS = 9
 
@@ -111,6 +114,13 @@ namespace pixelquest {
     let weapon = W_NONE
     let lastAttack = 0
     let bgLayers: Image[] = null
+    // Unter Wasser: weniger Schwerkraft, langsames Sinken, mit A beliebig oft schwimmen
+    let swimming = false
+    let worldGravity = 400
+    let lastStroke = 0
+    const WATER_GRAVITY_PERCENT = 40
+    const WATER_MAX_SINK = 60
+    const WATER_STROKE = 95
 
     let boss: Sprite = null
     let bossBar: StatusBarSprite = null
@@ -188,7 +198,7 @@ namespace pixelquest {
         slashL = flipped([slashR])[0]
         chestClosedImg = projImg("chestClosed", gfx.chestClosed)
         chestOpenImg = projImg("chestOpen", gfx.chestOpen)
-        for (let s = 0; s < 3; s++) {
+        for (let s = 0; s < STYLE_NAMES.length; s++) {
             const S = STYLE_NAMES[s]
             const bg = gfx.backgrounds[s]
             styleBg[s] = [projImg(S + "Sky", bg[0]), projImg(S + "Far", bg[1]), projImg(S + "Near", bg[2])]
@@ -299,6 +309,14 @@ namespace pixelquest {
 
     function jump() {
         if (!hero || levelDone || !running) return
+        if (swimming) {
+            if (game.runtime() - lastStroke < 160) return
+            lastStroke = game.runtime()
+            hero.vy = -WATER_STROKE
+            sfx.play(sfx.jump)
+            hero.startEffect(effects.bubbles, 250)
+            return
+        }
         const grounded = isOnGround(hero) || game.runtime() - lastGrounded < 90
         if (grounded) {
             hero.vy = -jumpSpeed
@@ -316,7 +334,7 @@ namespace pixelquest {
     controller.up.onEvent(ControllerButtonEvent.Pressed, jump)
     // kurzer Tastendruck = kleiner Sprung
     controller.A.onEvent(ControllerButtonEvent.Released, function () {
-        if (hero && hero.vy < -70) hero.vy = -70
+        if (hero && !swimming && hero.vy < -70) hero.vy = -70
     })
 
     function hurtHero() {
@@ -338,7 +356,7 @@ namespace pixelquest {
     function spawnWalker(col: number, row: number) {
         const e = sprites.create(walkerL[biome][0], SpriteKind.Enemy)
         tiles.placeOnTile(e, tiles.getTileLocation(col, row))
-        e.ay = gravity
+        e.ay = worldGravity
         e.data["flyer"] = false
         e.data["dir"] = -1
         e.data["dead"] = false
@@ -376,7 +394,7 @@ namespace pixelquest {
         e.setFlag(SpriteFlag.GhostThroughWalls, true)
         e.vx = 0
         e.vy = e.data["flyer"] ? 0 : -40
-        e.ay = gravity
+        e.ay = worldGravity
         e.lifespan = 600
         info.changeScoreBy(20)
         sfx.play(sfx.enemyDeath)
@@ -420,7 +438,7 @@ namespace pixelquest {
         if (pop) {
             s.vy = -130
             s.vx = randint(-45, 45)
-            s.ay = gravity
+            s.ay = worldGravity
             s.fx = 60
         }
         return s
@@ -669,7 +687,10 @@ namespace pixelquest {
         clearLevelSprites()
         tiles.setCurrentTilemap(worldMap(i))
         bgLayers = styleBg[biome]
-        scene.setBackgroundColor(biome == 0 ? 9 : 15)
+        scene.setBackgroundColor(STYLE_BG_COLOR[biome])
+        swimming = biome == Style.Underwater
+        worldGravity = swimming ? Math.round(gravity * WATER_GRAVITY_PERCENT / 100) : gravity
+        hero.ay = worldGravity
 
         // Kachelsatz der Karte einordnen: Markierungen, Stacheln, Ziel (Vergleich über den Bildinhalt)
         const data = game.currentScene().tileMap.data
@@ -681,7 +702,7 @@ namespace pixelquest {
             let m = -1
             for (let j = 0; j < markerImgs.length; j++) if (ts[k].equals(markerImgs[j]) || ts[k].equals(gfx.markers[j])) { m = j; break }
             markerOf.push(m)
-            for (let s = 0; s < 3; s++) {
+            for (let s = 0; s < STYLE_NAMES.length; s++) {
                 if (ts[k].equals(styleTiles[s][4]) || ts[k].equals(gfx.tilesets[s][4])) spikeIdx.push(k)
                 if (ts[k].equals(styleTiles[s][5]) || ts[k].equals(gfx.tilesets[s][5])) goalIdx.push(k)
             }
@@ -727,7 +748,7 @@ namespace pixelquest {
         invincibleUntil = 0
 
         controller.moveSprite(hero, 0, 0)
-        game.splash("Welt " + (i + 1) + ": " + worldName(i), i == 0 && doubleJumpEnabled ? "2x A = Doppelsprung" : "")
+        game.splash("Welt " + (i + 1) + ": " + worldName(i), swimming ? "A = schwimmen" : (i == 0 && doubleJumpEnabled ? "2x A = Doppelsprung" : ""))
         if (bossWorld && weapon == W_NONE) chooseWeapon()
         controller.moveSprite(hero, runSpeed, 0)
         if (worldHandler) worldHandler(i + 1)
@@ -782,6 +803,7 @@ namespace pixelquest {
             hurtHero()
             if (info.life() > 0) respawnHero()
         }
+        if (swimming && hero.vy > WATER_MAX_SINK) hero.vy = WATER_MAX_SINK
         // Blinken während Unverwundbarkeit
         hero.setFlag(SpriteFlag.Invisible, now < invincibleUntil && Math.floor(now / 80) % 2 == 0)
         checkHeroTiles()
@@ -817,7 +839,7 @@ namespace pixelquest {
         info.setLife(startLives)
         biome = worldStyle(0)
         bgLayers = styleBg[biome]
-        scene.setBackgroundColor(biome == 0 ? 9 : 15)
+        scene.setBackgroundColor(STYLE_BG_COLOR[biome])
         sfx.play(sfx.startTune)
         game.splash(title, worldCount + " Welten - druecke A")
         running = true
