@@ -819,23 +819,23 @@ namespace pixelquest {
     game.onUpdate(function () {
         if (!hero || !running) return
         const now = game.runtime()
-        if (isOnGround(hero)) {
+        // In den Abgrund gefallen: der Kartenrand wirkt in MakeCode wie eine Wand,
+        // deshalb zählt schon das Erreichen des unteren Rands als Absturz.
+        const mapBottom = game.currentScene().tileMap.areaHeight()
+        if (hero.bottom >= mapBottom - 2 && !levelDone) {
+            invincibleUntil = 0
+            hurtHero()
+            if (info.life() > 0) respawnHero()
+        } else if (isOnGround(hero)) {
             lastGrounded = now
             jumpsLeft = 1
-            // Kontrollpunkt merken (nur auf sicherem Boden)
+            // Kontrollpunkt merken (nur auf sicherem Boden, nie auf dem unteren Kartenrand)
             const col = Math.floor(hero.x / 16), row = Math.floor((hero.bottom - 1) / 16)
-            if (now > invincibleUntil && !isSpikeAt(col, row) && isWall(col, row + 1)
+            if (now > invincibleUntil && hero.bottom < mapBottom - 16 && !isSpikeAt(col, row) && isWall(col, row + 1)
                 && isWall(Math.floor((hero.left + 1) / 16), row + 1) && isWall(Math.floor((hero.right - 1) / 16), row + 1)) {
                 checkpointX = hero.x
                 checkpointY = hero.y
             }
-        }
-        // In den Abgrund gefallen: der Kartenrand wirkt in MakeCode wie eine Wand,
-        // deshalb zählt schon das Erreichen des unteren Rands als Absturz.
-        if (hero.bottom >= game.currentScene().tileMap.areaHeight() - 2 && !levelDone) {
-            invincibleUntil = 0
-            hurtHero()
-            if (info.life() > 0) respawnHero()
         }
         if (swimming && hero.vy > WATER_MAX_SINK) hero.vy = WATER_MAX_SINK
         // Blinken während Unverwundbarkeit
