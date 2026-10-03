@@ -77,6 +77,11 @@ namespace pixelquest {
     const STYLE_JUMP = [100, 100, 100, 100, 72, 100, 100, 100]
     // Eis: Figur beschleunigt und bremst langsam (Anteil pro Frame in Prozent, Boden / Luft)
     const ICE_GRIP = 4
+    // Biom-Paletten (palettes.ts): beim Laden jeder Welt wird die Palette ihres Stils gesetzt
+    let biomePalettes = true
+    function applyPalette(style: number) {
+        if (biomePalettes && style >= 0 && style < pqPalettes.biome.length) image.setPalette(pqPalettes.biome[style])
+    }
     const ICE_AIR_GRIP = 8
     const WALKER_TYPES = ["slime", "robot", "skeleton", "crab", "alien", "scorpion", "penguin", "shroom"]
     const FLYER_TYPES = ["bird", "drone", "bat", "fish", "ufo", "vulture", "owl", "wisp"]
@@ -720,6 +725,7 @@ namespace pixelquest {
         tiles.setCurrentTilemap(worldMap(i))
         bgLayers = styleBg[biome]
         scene.setBackgroundColor(STYLE_BG_COLOR[biome])
+        applyPalette(biome)
         swimming = biome == Style.Underwater
         worldGravity = Math.round(gravity * STYLE_GRAVITY[biome] / 100)
         worldJump = STYLE_JUMP[biome]
@@ -875,6 +881,7 @@ namespace pixelquest {
         biome = worldStyle(0)
         bgLayers = styleBg[biome]
         scene.setBackgroundColor(STYLE_BG_COLOR[biome])
+        applyPalette(biome)
         sfx.play(sfx.startTune)
         game.splash(title, worldCount + " Welten - druecke A")
         running = true
@@ -936,6 +943,15 @@ namespace pixelquest {
     //% power.min=80 power.max=320 power.defl=175
     //% group="Einstellungen" weight=85
     export function setJumpPower(power: number) { jumpSpeed = power }
+
+    /**
+     * Jede Welt bekommt die Farbpalette ihres Biom-Stils (z. B. mehr Blautöne unter Wasser, Sandtöne in der Wüste).
+     * Aus: das Spiel nutzt die Palette des Projekts.
+     */
+    //% blockId=pq_biome_palettes block="Biom-Paletten $on"
+    //% on.shadow=toggleOnOff on.defl=true
+    //% group="Einstellungen" weight=79
+    export function useBiomePalettes(on: boolean) { biomePalettes = on }
 
     //% blockId=pq_double_jump block="Doppelsprung $on"
     //% on.shadow=toggleOnOff on.defl=true

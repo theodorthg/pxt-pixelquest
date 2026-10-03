@@ -84,3 +84,7 @@ Pfeiltasten laufen, A springt (in der Luft nochmal = Doppelsprung), B greift an 
 MIT
 
 > Diese Seite wird auch von MakeCode angezeigt, wenn die Erweiterung geladen ist.
+
+## Biom-Paletten (ab v0.6.0)
+
+Jede Welt bekommt beim Laden die 16-Farben-Palette ihres Stils (z. B. mehr Blautöne unter Wasser, Sandtöne in der Wüste). Weiß, Rot, Gelb, Beige, Braun und Schwarz bleiben in allen Paletten gleich, damit Figur, Items und Boss überall gleich aussehen. Abschalten mit dem Block `Biom-Paletten aus` (`pixelquest.useBiomePalettes(false)`), dann gilt die Palette des Projekts. Die Farben stehen in `generator/assetgen.js` (BIOME_PALETTE_OVERRIDES); `node tools/build-palettes.js` erzeugt daraus `palettes.ts`.

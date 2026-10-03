@@ -1,6 +1,6 @@
 {
     "name": "pixelquest",
-    "version": "0.5.1",
+    "version": "0.6.0",
     "description": "Pixel-Quest: Jump & Run-Engine mit Blöcken, generierten Grafiken, Sounds und 3 Welten",
     "dependencies": {
         "device": "*",
@@ -11,6 +11,7 @@
         "assets.ts",
         "sounds.ts",
         "levels.ts",
+        "palettes.ts",
         "engine.ts"
     ],
     "testFiles": [
