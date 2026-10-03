@@ -61,16 +61,18 @@ namespace pixelquest {
         //% block="Unter Wasser"
         Underwater = 3,
         //% block="Weltall"
-        Space = 4
+        Space = 4,
+        //% block="Wüste"
+        Desert = 5
     }
-    const STYLE_NAMES = ["grass", "scifi", "dungeon", "underwater", "space"]
-    const STYLE_TITLES = ["Gruene Wiesen", "Neon-Station", "Verlies", "Korallenriff", "Mondkrater"]
-    const STYLE_BG_COLOR = [9, 15, 15, 8, 15]
+    const STYLE_NAMES = ["grass", "scifi", "dungeon", "underwater", "space", "desert"]
+    const STYLE_TITLES = ["Gruene Wiesen", "Neon-Station", "Verlies", "Korallenriff", "Mondkrater", "Glutwueste"]
+    const STYLE_BG_COLOR = [9, 15, 15, 8, 15, 9]
     // Physik je Stil in Prozent: Schwerkraft und Sprungkraft (Weltall: schwebende, weite Sprünge)
-    const STYLE_GRAVITY = [100, 100, 100, 40, 45]
-    const STYLE_JUMP = [100, 100, 100, 100, 72]
-    const WALKER_TYPES = ["slime", "robot", "skeleton", "crab", "alien"]
-    const FLYER_TYPES = ["bird", "drone", "bat", "fish", "ufo"]
+    const STYLE_GRAVITY = [100, 100, 100, 40, 45, 100]
+    const STYLE_JUMP = [100, 100, 100, 100, 72, 100]
+    const WALKER_TYPES = ["slime", "robot", "skeleton", "crab", "alien", "scorpion"]
+    const FLYER_TYPES = ["bird", "drone", "bat", "fish", "ufo", "vulture"]
     const MARKER_NAMES = ["pqStart", "pqCoin", "pqGem", "pqHeart", "pqChest", "pqChestHeart", "pqWalker", "pqFlyer", "pqBoss", "pqGate"]
     const MAX_WORLDS = 9
 

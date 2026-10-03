@@ -2,7 +2,7 @@
 
 > In MakeCode Arcade nutzen: **Erweiterungen** → `https://github.com/theodorthg/pxt-pixelquest` einfügen.
 
-Jump & Run-Engine für MakeCode Arcade: 3 eingebaute Welten, 5 Stile (Gras, SciFi, Dungeon, Unter Wasser, Weltall), animierte Figuren und Gegner,
+Jump & Run-Engine für MakeCode Arcade: 3 eingebaute Welten, 6 Stile (Gras, SciFi, Dungeon, Unter Wasser, Weltall, Wüste), animierte Figuren und Gegner,
 Doppelsprung, Truhen, Endboss mit Statusleiste und wählbarer Waffe. Alle Grafiken und Sounds sind mit dem
 Arcade Asset Generator prozedural erzeugt.
 
@@ -20,7 +20,7 @@ pixelquest.startGame()
 - **Start:** `starte Pixel-Quest`, `setze Titel auf …`, `beginne in Welt …`
 - **Unter Wasser:** weniger Schwerkraft, langsames Sinken; A (oder ↑) beliebig oft drücken = schwimmen.
 - **Weltall:** geringe Schwerkraft, schwebende weite Sprünge.
-- **Welten:** `Welt … Karte [Tilemap] Stil [Gras/SciFi/Dungeon/Unter Wasser/Weltall]`, `Welt … Stil …` (bis zu 9 Welten)
+- **Welten:** `Welt … Karte [Tilemap] Stil [Gras/SciFi/Dungeon/Unter Wasser/Weltall/Wüste]`, `Welt … Stil …` (bis zu 9 Welten)
 - **Einstellungen:** Leben, maximale Leben, Laufgeschwindigkeit, Sprungkraft, Doppelsprung an/aus und Kraft,
   Schwerkraft, Gegner-Tempo, Boss-Energie
 - **Ereignisse:** wenn Münze gesammelt, wenn Gegner besiegt, wenn Welt … beginnt, wenn Boss besiegt
@@ -38,13 +38,14 @@ nimmt sie ihre eingebaute Grafik. Am einfachsten startet man mit einem Pixel-Que
 | | Bild | `heroJump`, `heroFall` |
 | Boss | Animation / Bild | `bossWalk` / `bossAttack`, `bossHurt` |
 | Items & Waffen | Animation / Bild | `coinSpin` / `gem`, `heart`, `shot`, `fire`, `slash`, `chestClosed`, `chestOpen` |
-| Hintergrund je Stil | Bild 160×120 | `grassSky`, `grassFar`, `grassNear` (ebenso `scifi…`, `dungeon…`, `underwater…`, `space…`) |
-| Kacheln je Stil | Kachel | `grassGroundTop`, `grassGround`, `grassPlatform`, `grassSpikes`, `grassGoal`, `grassDeco` (ebenso `scifi…`, `dungeon…`, `underwater…`, `space…`) |
+| Hintergrund je Stil | Bild 160×120 | `grassSky`, `grassFar`, `grassNear` (ebenso `scifi…`, `dungeon…`, `underwater…`, `space…`, `desert…`) |
+| Kacheln je Stil | Kachel | `grassGroundTop`, `grassGround`, `grassPlatform`, `grassSpikes`, `grassGoal`, `grassDeco` (ebenso `scifi…`, `dungeon…`, `underwater…`, `space…`, `desert…`) |
 | Gegner Gras | Animation / Bild | `slimeWalk`, `birdFly` / `slimeDead`, `birdDead` |
 | Gegner SciFi | Animation / Bild | `robotWalk`, `droneFly` / `robotDead`, `droneDead` |
 | Gegner Dungeon | Animation / Bild | `skeletonWalk`, `batFly` / `skeletonDead`, `batDead` |
 | Gegner Unter Wasser | Animation / Bild | `crabWalk`, `fishFly` / `crabDead`, `fishDead` |
 | Gegner Weltall | Animation / Bild | `alienWalk`, `ufoFly` / `alienDead`, `ufoDead` |
+| Gegner Wüste | Animation / Bild | `scorpionWalk`, `vultureFly` / `scorpionDead`, `vultureDead` |
 
 Gespiegelte Bilder (nach links) erzeugt die Engine selbst.
 
